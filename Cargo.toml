@@ -1,0 +1,2 @@
+[workspace]
+members = ["src/tw_core_ffi", "src/wallet"]
