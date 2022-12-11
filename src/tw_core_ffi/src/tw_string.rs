@@ -1,4 +1,5 @@
-use std::ffi::{c_char, CString};
+use std::ffi::{c_char, CStr, CString};
+use std::str::Utf8Error;
 
 pub struct TWString {
     raw: *mut TWStringRaw,
@@ -6,6 +7,19 @@ pub struct TWString {
 
 impl TWString {
     pub fn new() -> TWString { TWString::default() }
+
+    /// Tries to converts `TWString` to `String`.
+    pub fn to_string(&self) -> Result<String, Utf8Error> {
+        let bytes = unsafe { TWStringUTF8Bytes(self.raw) };
+        unsafe {
+            CStr::from_ptr(bytes)
+                .to_str()
+                // Clone the `str` slice into `String`.
+                .map(|str| str.to_string())
+        }
+    }
+
+    pub(crate) fn from_raw(raw: *mut TWStringRaw) -> TWString { TWString { raw } }
 
     pub(crate) fn as_ptr(&self) -> *const TWStringRaw { self.raw }
 }
@@ -39,5 +53,17 @@ pub(crate) struct TWStringRaw {
 
 extern "C" {
     fn TWStringCreateWithUTF8Bytes(bytes: *const c_char) -> *mut TWStringRaw;
+    fn TWStringUTF8Bytes(twstring: *const TWStringRaw) -> *const c_char;
     fn TWStringDelete(twstring: *mut TWStringRaw);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tw_string() {
+        let tw_string = TWString::from("abc");
+        assert_eq!(tw_string.to_string(), Ok("abc".to_string()));
+    }
 }

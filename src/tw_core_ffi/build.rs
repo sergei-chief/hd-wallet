@@ -29,8 +29,8 @@ fn main() {
     println!("cargo:rustc-link-search=native={tw_core_dir}/build/local/lib",);
 
     // Libraries; order matters
-    for i in 0..LIBS.len() {
-        println!("cargo:rustc-link-lib={}", LIBS[i]);
+    for lib in LIBS {
+        println!("cargo:rustc-link-lib={lib}");
     }
     if cfg!(target_os = "macos") {
         println!("cargo:rustc-link-lib=c++");

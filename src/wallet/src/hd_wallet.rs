@@ -1,5 +1,8 @@
 use std::ops::RangeInclusive;
-use tw_core_ffi::tw_hd_wallet::{InvalidEntropy, InvalidMnemonic, TWHDWallet};
+use tw_core_ffi::tw_hd_wallet::TWHDWallet;
+
+pub use tw_core_ffi::tw_coin_type::TWCoinType as CoinType;
+pub use tw_core_ffi::tw_hd_wallet::{InvalidEntropy, InvalidMnemonic};
 
 pub struct HDWallet {
     inner: TWHDWallet,
@@ -30,6 +33,20 @@ impl HDWallet {
 
         let inner = TWHDWallet::with_entropy(entropy_data, passphrase)?;
         Ok(HDWallet { inner })
+    }
+
+    /// Derives default addresses for the given `coins`.
+    pub fn derive_default_addresses<'a, 'b, I>(
+        &'b self,
+        coins: I,
+    ) -> impl Iterator<Item = String> + 'a
+    where
+        'b: 'a, // 'b should outlive 'a
+        I: IntoIterator<Item = CoinType> + 'a,
+    {
+        coins
+            .into_iter()
+            .map(|coin_type| self.inner.derive_default_address(coin_type))
     }
 }
 

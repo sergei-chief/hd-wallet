@@ -1,7 +1,47 @@
+use std::collections::BTreeSet;
+use std::io;
+
 mod hd_wallet;
+mod wallet_input;
 
-fn main() {
-    let x = std::env::args();
+use hd_wallet::{CoinType, HDWallet};
+use wallet_input::WalletInput;
 
-    println!("Args: {x:?}");
+const DEFAULT_PASSPHRASE: &str = "";
+
+fn help() {
+    println!("Input: As command-line argument, a BIP39 mnemonic or a mnemonic entropy (hex string) is also accepted (16-32 bytes)");
+}
+
+fn main() -> io::Result<()> {
+    let input = match WalletInput::parse_cmd_args() {
+        Ok(input) => input,
+        Err(e) => {
+            help();
+            return Err(e.into());
+        }
+    };
+
+    let hd_wallet = match input {
+        WalletInput::Mnemonic(mnemonic) => {
+            HDWallet::with_mnemonic(mnemonic, DEFAULT_PASSPHRASE.to_string())
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))?
+        }
+        WalletInput::Entropy(entropy) => {
+            HDWallet::with_entropy(&entropy, DEFAULT_PASSPHRASE.to_string())
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))?
+        }
+    };
+
+    // Order the addresses alphabetically and remove duplicates by using `BTreeSet`.
+    let addresses: BTreeSet<_> = hd_wallet
+        .derive_default_addresses(CoinType::iter_coins())
+        .collect();
+
+    println!("All addresses:");
+    for address in addresses {
+        println!("  {address}");
+    }
+
+    Ok(())
 }

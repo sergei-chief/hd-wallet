@@ -1,3 +1,4 @@
+use crate::tw_coin_type::{TWCoinType, TWCoinTypeRaw};
 use crate::tw_data::{TWData, TWDataRaw};
 use crate::tw_string::{TWString, TWStringRaw};
 use std::fmt;
@@ -61,6 +62,13 @@ impl TWHDWallet {
 
         Ok(TWHDWallet { raw })
     }
+
+    pub fn derive_default_address(&self, coin: TWCoinType) -> String {
+        let tw_string_raw = unsafe { TWHDWalletGetAddressForCoin(self.raw, coin.as_raw()) };
+        TWString::from_raw(tw_string_raw)
+            .to_string()
+            .expect("'TWHDWalletGetAddressForCoin' should have returned a non UTF-8 string")
+    }
 }
 
 impl Drop for TWHDWallet {
@@ -85,6 +93,14 @@ extern "C" {
         entropy: *const TWDataRaw,
         passphrase: *const TWStringRaw,
     ) -> *mut TWHDWalletRaw;
+
+    /// # Safe
+    ///
+    /// `TWHDWalletGetAddressForCoin` panics if the given `coin` is unknown.
+    fn TWHDWalletGetAddressForCoin(
+        wallet: *const TWHDWalletRaw,
+        coin: TWCoinTypeRaw,
+    ) -> *mut TWStringRaw;
 
     fn TWHDWalletDelete(wallet: *mut TWHDWalletRaw);
 }
@@ -146,5 +162,16 @@ mod tests {
                 "'{entropy:?}' is expected to be an invalid entropy"
             ));
         }
+    }
+
+    #[test]
+    fn test_hd_wallet_derive_address() {
+        let tw_hd_wallet = TWHDWallet::with_mnemonic(
+            "oil oil oil oil oil oil oil oil oil oil oil oil",
+            PASSPHRASE,
+        )
+        .unwrap();
+        let actual = tw_hd_wallet.derive_default_address(TWCoinType::TWCoinTypeBitcoin);
+        assert_eq!(actual, "bc1q98wufxmtfh5qlk7fe5dzy2z8cflvqjysrh4fx2");
     }
 }
