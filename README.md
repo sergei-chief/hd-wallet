@@ -9,7 +9,15 @@
 export TW_CORE_DIR="/path/to/trustwallet/wallet-core"
 ```
 
+3. Set the `ETHERSCAN_APIKEY` environment variable. For more info
+   visit [Getting an API key](https://docs.etherscan.io/getting-started/viewing-api-usage-statistics)
+
+```shell
+export ETHERSCAN_APIKEY="API_KEY_HERE"
+```
+
 3. Run
+
 ```shell
 cargo run -- mnemonic phrase or an entropy here
 ```

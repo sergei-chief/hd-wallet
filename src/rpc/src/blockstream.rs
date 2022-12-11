@@ -10,21 +10,21 @@ pub const BLOCKSTREAM_URL: &str = "https://blockstream.info";
 #[allow(dead_code)]
 pub type Satoshis = i64;
 
-pub struct BlockstreamRpc<T> {
-    transport: T,
+pub struct BlockstreamRpc<'a, T> {
+    transport: &'a T,
     url: String,
 }
 
-impl<T> BlockstreamRpc<T>
+impl<'a, T> BlockstreamRpc<'a, T>
 where
     T: HttpTransport + Sync,
 {
-    pub fn with_default_url(transport: T) -> Self {
+    pub fn with_default_url(transport: &'a T) -> Self {
         BlockstreamRpc::with_url(transport, BLOCKSTREAM_URL.to_string())
             .expect("'BLOCKSTREAM_URL' is expected to be a valid URL")
     }
 
-    pub fn with_url(transport: T, url: String) -> Result<Self, InvalidUri> {
+    pub fn with_url(transport: &'a T, url: String) -> Result<Self, InvalidUri> {
         // Check if the given `url` is correct.
         url.parse::<Uri>()?;
         Ok(BlockstreamRpc { transport, url })
@@ -70,13 +70,14 @@ mod tests {
     #[tokio::test]
     async fn test_blockstream_rpc() {
         let transport = crate::http::HttpBuilder::build();
-        let rpc = BlockstreamRpc::with_default_url(transport);
+        let rpc = BlockstreamRpc::with_default_url(&transport);
 
         let res = rpc
             .address_info("bc1qpjult34k9spjfym8hss2jrwjgf0xjf40ze0pp8")
             .await
             .unwrap();
         assert_eq!(res.address, "bc1qpjult34k9spjfym8hss2jrwjgf0xjf40ze0pp8");
-        assert!(res.chain_stats.tx_count > 0);
+        // `bc1qpjult34k9spjfym8hss2jrwjgf0xjf40ze0pp8` has 2 transactions at the moment when the test has been written.
+        assert!(res.chain_stats.tx_count >= 2);
     }
 }
