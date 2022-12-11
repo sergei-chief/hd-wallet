@@ -7,4 +7,6 @@ edition = "2021"
 
 [dependencies]
 hex = "0.4"
+rpc = { path = "../rpc" }
+tokio = { version = "1.23", features = ["macros", "rt-multi-thread"] }
 tw_core_ffi = { path = "../tw_core_ffi" }

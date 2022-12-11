@@ -13,7 +13,8 @@ fn help() {
     println!("Input: As command-line argument, a BIP39 mnemonic or a mnemonic entropy (hex string) is also accepted (16-32 bytes)");
 }
 
-fn main() -> io::Result<()> {
+#[tokio::main]
+async fn main() -> io::Result<()> {
     let input = match WalletInput::parse_cmd_args() {
         Ok(input) => input,
         Err(e) => {
@@ -38,10 +39,26 @@ fn main() -> io::Result<()> {
         .derive_default_addresses(CoinType::iter_coins())
         .collect();
 
-    println!("All addresses:");
+    print_activity(&hd_wallet).await;
+
+    println!("\nAll addresses:");
     for address in addresses {
         println!("  {address}");
     }
 
     Ok(())
+}
+
+/// Prints out, if, for the BTC, ETH, and ATOM addresses there is a current balance
+/// and whether there were any transactions on the address.
+async fn print_activity(hd_wallet: &HDWallet) {
+    println!("Activity:");
+
+    let transport = rpc::http::HttpBuilder::build();
+    let bitcoin_rpc = rpc::blockstream::BlockstreamRpc::with_default_url(transport);
+    let bitcoin_address = hd_wallet.derive_default_address(CoinType::TWCoinTypeBitcoin);
+    match bitcoin_rpc.transaction_count(&bitcoin_address).await {
+        Ok(tx_count) => println!("{tx_count} transactions on {bitcoin_address} (BTC)"),
+        Err(e) => eprint!("Error on getting Bitcoin address info: {e}"),
+    }
 }

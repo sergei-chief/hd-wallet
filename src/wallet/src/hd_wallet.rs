@@ -35,6 +35,10 @@ impl HDWallet {
         Ok(HDWallet { inner })
     }
 
+    pub fn derive_default_address(&self, coin: CoinType) -> String {
+        self.inner.derive_default_address(coin)
+    }
+
     /// Derives default addresses for the given `coins`.
     pub fn derive_default_addresses<'a, 'b, I>(
         &'b self,

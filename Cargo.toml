@@ -1,2 +1,6 @@
 [workspace]
-members = ["src/tw_core_ffi", "src/wallet"]
+members = [
+    "src/rpc",
+    "src/tw_core_ffi",
+    "src/wallet"
+]
