@@ -1,3 +1,9 @@
+### TODO
+
+ - Optimize transaction history request for Cosmos address.
+Currently, it's designed suboptimal, and the transactions count is different from
+what [mintscan](https://www.mintscan.io/) shows.
+
 ### How to run
 
 1. Build [trustwallet/wallet-core](https://github.com/trustwallet/wallet-core) following

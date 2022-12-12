@@ -57,6 +57,7 @@ async fn print_activity(hd_wallet: &HDWallet) {
     let transport = rpc::http::HttpBuilder::build();
     let bitcoin_address = hd_wallet.derive_default_address(CoinType::TWCoinTypeBitcoin);
     let eth_address = hd_wallet.derive_default_address(CoinType::TWCoinTypeEthereum);
+    let cosmos_address = hd_wallet.derive_default_address(CoinType::TWCoinTypeCosmos);
 
     print_btc_activity(&bitcoin_address, &transport).await;
 
@@ -64,6 +65,8 @@ async fn print_activity(hd_wallet: &HDWallet) {
         Ok(api_key) => print_eth_activity(&eth_address, &transport, api_key).await,
         Err(_) => eprintln!("Set 'ETHERSCAN_APIKEY' environment variable to show an ETH activity"),
     }
+
+    print_cosmos_activity(&cosmos_address, &transport).await;
 }
 
 async fn print_btc_activity<T>(bitcoin_address: &str, transport: &T)
@@ -85,5 +88,16 @@ where
     match eth_rpc.transaction_count(eth_address).await {
         Ok(tx_count) => println!("  {tx_count} transactions on {eth_address} (ETH)"),
         Err(e) => eprintln!("Error on getting Ethereum address info: {e}"),
+    }
+}
+
+async fn print_cosmos_activity<T>(cosmos_address: &str, transport: &T)
+where
+    T: rpc::http::HttpTransport + Sync,
+{
+    let cosmos_rpc = rpc::cosmos::CosmosRpc::with_default_url(transport);
+    match cosmos_rpc.transaction_count(cosmos_address).await {
+        Ok(tx_count) => println!("  {tx_count} transactions on {cosmos_address} (ADA)"),
+        Err(e) => eprintln!("Error on getting Cosmos address info: {e}"),
     }
 }
